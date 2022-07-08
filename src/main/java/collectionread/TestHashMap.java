@@ -2,7 +2,10 @@ package collectionread;
 
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.Set;
 
 /**
  * @author: ywx
@@ -230,13 +233,132 @@ public class TestHashMap {
         return newTab;
     }
 
+    // 转化成红黑树 当链表的链节点达到8 且 底层数组的容量达到64才会转化
+    final void treeifyBin(HashMap.Node<K, V>[] tab, int hash) {
+        int n, index;
+        HashMap.Node<K, V> e;
+        if (tab == null || (n = tab.length) < MIN_TREEIFY_CAPACITY)
+            resize();
+            //e.class 为 Node.class
+        else if ((e = tab[index = (n - 1) & hash]) != null) {
+            HashMap.TreeNode<K, V> hd = null, tl = null;
+            do {
+                // TreeNode是hashMap的子节点 TreeNode二叉树的节点是hashMap链表的一个子类
+                // TreeNode是hashMap的子类 TreeNode依然是有next指针指向的
+                // TreeNode next指针为了当链表的链节点达到6的时候快速解树 还原到链表结构
+                // 为什么不强转为子类?
+                // replacementTreeNode() -> return new TreeNode<>(p.hash, p.key, p.value, next);
+                HashMap.TreeNode<K, V> p = replacementTreeNode(e, null);
+                if (tl == null)//只进入一次 进行一次赋值
+                    hd = p;//以hd进行真正的treeify
+                else {
+                    //节点转化关联
+                    p.prev = tl; //tl <- p.prev tl.next -> p
+                    tl.next = p;
+                }
+                //前置节点与后置节点的关联
+                tl = p;
+            } while ((e = e.next) != null);
+            if ((tab[index] = hd) != null)
+                hd.treeify(tab);
+        }
+    }
+
+    //remove
+    public V remove(Object key) {
+        HashMap.Node<K, V> e;
+        return (e = removeNode(hash(key), key, null, false, true)) == null ?
+                null : e.value;
+    }
+
+    final HashMap.Node<K, V> removeNode(int hash, Object key, Object value,
+                                        boolean matchValue, boolean movable) {
+        HashMap.Node<K, V>[] tab;
+        HashMap.Node<K, V> p;
+        int n, index;
+        if ((tab = table) != null && (n = tab.length) > 0 &&
+                (p = tab[index = (n - 1) & hash]) != null) {
+            HashMap.Node<K, V> node = null, e;
+            K k;
+            V v;
+            //==========node赋值====================================================
+            // 第一个节点找到了node
+            if (p.hash == hash &&
+                    ((k = p.key) == key || (key != null && key.equals(k))))
+                node = p;
+            else if ((e = p.next) != null) {
+                //是不是树节点
+                if (p instanceof HashMap.TreeNode)
+                    node = ((HashMap.TreeNode<K, V>) p).getTreeNode(hash, key);
+                //链表
+                else {
+                    // hashMap数组的槽位上 每次传入的key 参数里的key值 先检查首节点
+                    // jvm GC的安全点
+                    do {
+                        if (e.hash == hash &&
+                                ((k = e.key) == key ||
+                                        (key != null && key.equals(k)))) {
+                            node = e;
+                            break;
+                        }
+                        p = e;
+                    } while ((e = e.next) != null);
+                }
+            }
+            //===========node删除==============================================
+            //node != null       matchValue = false
+            if (node != null && (!matchValue || (v = node.value) == value ||
+                    (value != null && value.equals(v)))) {
+                if (node instanceof HashMap.TreeNode)
+                    ((HashMap.TreeNode<K, V>) node).removeTreeNode(this, tab, movable);
+                else if (node == p)
+                    tab[index] = node.next;
+                else
+                    p.next = node.next;
+                ++modCount;
+                --size;
+                //linkNode 的模板方法
+                afterNodeRemoval(node);
+                return node;
+            }
+        }
+        return null;
+    }
+    //1111
+    public Set<K> keySet() {
+        Set<K> ks = keySet;
+        if (ks == null) {
+            ks = new HashMap.KeySet();
+            keySet = ks;
+        }
+        return ks;
+    }
+
+
     public static void main(String[] args) {
+
         //一个hashMap如果有1000个元素
         //我们可以通过put方法的返回值,进行一个是否有数值覆盖的判断
         //如果有的业务逻辑从上层业务需求上,就可以肯定key绝对唯一
         //这个时候我们通过hashMap进行数据维护添加的话,代码可以需要通过这个put的特性唠保证我们的业务key确实是唯一的
         //如果发现我们put 的方法的返回值有值的话,说明业务key不唯一,可以直接抛出异常
         //通过代码进行业务的二次校验
+
+
+        HashMap hashMap = new HashMap<>();
+        Set set = hashMap.keySet();
+        //不允许  keySet并没有重写add方法 继承的父类的add 抛出异常
+        set.add("");
+        //直接删除的是map的节点 removeNode()的方法 移除的是kv键值对
+        set.remove("");
+        // keySet: set.remove("");
+        // keySet 就是hashMap里面的key的映射,其实真正的keySet并不是实际意义的存在
+        // keySet里面的元素其实都是对hashMap里面的内存地址的一个指向,
+        // 当对hashMap里面的keySet进行删除的时候,实际是删除了这个keySet内存指向的映射,自然keySet
+
+        ArrayList arrayList = new ArrayList();
+        //lambada 和函数式
+        arrayList.stream().forEach(System.out::println);
     }
 
 }
