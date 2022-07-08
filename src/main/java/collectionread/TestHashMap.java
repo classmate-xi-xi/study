@@ -237,6 +237,7 @@ public class TestHashMap {
     final void treeifyBin(HashMap.Node<K, V>[] tab, int hash) {
         int n, index;
         HashMap.Node<K, V> e;
+        //(n = tab.length) < MIN_TREEIFY_CAPACITY 底层table数组的容量达到64才会转化
         if (tab == null || (n = tab.length) < MIN_TREEIFY_CAPACITY)
             resize();
             //e.class 为 Node.class
@@ -334,6 +335,25 @@ public class TestHashMap {
         return ks;
     }
 
+    /**
+     * jdk 1.8
+     * @param key
+     * @return
+     */
+    //hashCode()的高16位异或低16位实现的：(h = k.hashCode()) ^ (h >>> 16)
+    static final int hash(Object key) {
+        int h;
+        return (key == null) ? 0 : (h = key.hashCode()) ^ (h >>> 16);
+    }
+
+    /**
+     * jdk1.7 计算存放在table【】里kv对的index下标
+     * @param h
+     * @param length
+     */
+    static int indexFor(int h, int length) {
+        return h & (length-1);  //第三步 取模运算 等价于对length取模 h%length
+    }
 
     public static void main(String[] args) {
 
