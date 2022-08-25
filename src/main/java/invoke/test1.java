@@ -5,7 +5,7 @@ import java.lang.reflect.Modifier;
 
 /**
  * @author: ywx
- * @description
+ * @description 反射获取static属性
  * @Date: 2022/07/28
  */
 
