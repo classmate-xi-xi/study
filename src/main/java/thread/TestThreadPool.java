@@ -1,8 +1,6 @@
 package thread;
 
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
@@ -247,8 +245,41 @@ public class TestThreadPool {
 //    }
 
     public static void main(String[] args) {
-        LinkedBlockingQueue queue = new LinkedBlockingQueue();
+        ThreadFactory factory = r -> {
+            Thread thread = new Thread(r);
+            thread.setName("1");
+            return thread;
+        };
+        LinkedBlockingQueue<Runnable> queue = new LinkedBlockingQueue<>();
         ThreadPoolExecutor threadPoolExecutor =
-                new ThreadPoolExecutor(3, 5, 1000, TimeUnit.SECONDS, queue);
+                new ThreadPoolExecutor(3, 5, 1000, TimeUnit.SECONDS, queue, factory);
+        Runnable runnable = () -> {
+            System.out.println("Hello from a thread!");
+            while (true) {
+
+            }
+
+        };
+        Runnable runnable1 = () -> {
+            System.out.println("Hello from b thread!");
+        };
+
+        Runnable runnable2 = () -> {
+            System.out.println("1");
+            while (true) {
+
+            }
+        };
+        threadPoolExecutor.execute(runnable);
+        threadPoolExecutor.execute(runnable1);
+        threadPoolExecutor.execute(runnable2);
+        threadPoolExecutor.execute(runnable2);
+        threadPoolExecutor.execute(runnable2);
+        threadPoolExecutor.execute(runnable2);
+        threadPoolExecutor.execute(runnable);
+        System.out.println("getActiveCount  " + threadPoolExecutor.getActiveCount());
+        System.out.println("getTaskCount  " + threadPoolExecutor.getTaskCount());
+        System.out.println("queue.size   " + queue.size());
+
     }
 }
